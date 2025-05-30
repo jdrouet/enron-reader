@@ -17,15 +17,34 @@ impl std::error::Error for Error {}
 
 pub struct EnronMail {
     pub path: PathBuf,
+    pub message_id: Box<str>,
+    pub date: chrono::DateTime<chrono::FixedOffset>,
     pub header: HashMap<Box<str>, Box<str>>,
     pub body: Box<str>,
 }
 
 impl EnronMail {
     pub fn parse(path: PathBuf, input: &str) -> Result<Self, Error> {
-        let (body, header) = EnronMailHeaderParser::new(path.clone()).parse(input)?;
+        let (body, mut header) = EnronMailHeaderParser::new(path.clone()).parse(input)?;
+        let message_id = header.remove("Message-ID").ok_or_else(|| Error {
+            reason: "message ID header not found".into(),
+            line: String::default(),
+            path: path.clone(),
+        })?;
+        let date = header.remove("Date").ok_or_else(|| Error {
+            reason: "date header not found".into(),
+            line: Default::default(),
+            path: path.clone(),
+        })?;
+        let date = chrono::DateTime::parse_from_rfc2822(date.as_ref()).map_err(|_| Error {
+            reason: "unable to parse date".into(),
+            line: Default::default(),
+            path: path.clone(),
+        })?;
         Ok(Self {
             path,
+            message_id,
+            date,
             header,
             body: body.into(),
         })
@@ -118,7 +137,7 @@ mod tests {
         let content = include_str!("../resources/benson-r-inbox-1");
         let mail = EnronMail::parse(path, content).unwrap();
         assert_eq!(
-            mail.header.get("Message-ID").unwrap().as_ref(),
+            mail.message_id.as_ref(),
             "<33386806.1075840371945.JavaMail.evans@thyme>"
         );
         assert_eq!(
@@ -137,7 +156,7 @@ mod tests {
         let content = include_str!("../resources/blair-l-inbox-1");
         let mail = EnronMail::parse(path, content).unwrap();
         assert_eq!(
-            mail.header.get("Message-ID").unwrap().as_ref(),
+            mail.message_id.as_ref(),
             "<1199981.1075853079812.JavaMail.evans@thyme>"
         );
         assert_eq!(
