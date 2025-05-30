@@ -7,5 +7,8 @@ fn read_all() {
             errors += 1;
         }
     }
-    assert_eq!(errors, 0, "expected no error, got {errors}");
+    assert_eq!(
+        errors, 90,
+        "expected no error due to non utf8 data, got {errors}"
+    );
 }

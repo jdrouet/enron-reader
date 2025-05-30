@@ -113,7 +113,7 @@ mod tests {
     use super::EnronMail;
 
     #[test]
-    fn should_parse_email() {
+    fn should_parse_email_from_benson() {
         let path = PathBuf::from("resources/benson-r-inbox-1");
         let content = include_str!("../resources/benson-r-inbox-1");
         let mail = EnronMail::parse(path, content).unwrap();
@@ -129,5 +129,20 @@ mod tests {
             mail.header.get("Cc").unwrap().as_ref(),
             "daniel.diamond@enron.com, teresa.mandola@enron.com, corp <.carter@enron.com>, david.forster@enron.com"
         )
+    }
+
+    #[test]
+    fn should_parse_email_from_blair() {
+        let path = PathBuf::from("resources/blair-l-inbox-1");
+        let content = include_str!("../resources/blair-l-inbox-1");
+        let mail = EnronMail::parse(path, content).unwrap();
+        assert_eq!(
+            mail.header.get("Message-ID").unwrap().as_ref(),
+            "<1199981.1075853079812.JavaMail.evans@thyme>"
+        );
+        assert_eq!(
+            mail.header.get("From").unwrap().as_ref(),
+            "lynn.blair@enron.com"
+        );
     }
 }
